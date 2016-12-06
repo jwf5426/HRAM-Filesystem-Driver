@@ -64,7 +64,7 @@ int nextCartridge = 0; // Number of the next cartridge with empty frames
 // Description  : This function generates the registers need to communicate with the HRAM bus.
 //
 // Inputs       : busResponse - an uint64_t that is used to read each register
-// Outputs      : unint64_t - sent to the client_cart_bus_request
+// Outputs      : unint64_t - sent to the cart_io_bus
 
 uint64_t generateBusRequest() {
 	uint64_t toReturn = 0; // Zero out 64-bit unsigned int. Return code zeroed out.
@@ -126,7 +126,7 @@ void runBusRequest(uint8_t kyOne, uint16_t ctOne, uint16_t fmOne, void *buf) {
 	regstate.fmOne = fmOne; // Assigns frame register one
 	regstate.rt = 0; 
 
-	readBusResponse(client_cart_bus_request(generateBusRequest(), buf)); // Call readBusResponse to read the returned 64-bit unsigned int.
+	readBusResponse(cart_io_bus(generateBusRequest(), buf)); // Call readBusResponse to read the returned 64-bit unsigned int.
 }
 
 ////////////////////////////////////////////////////////////////////////////////
