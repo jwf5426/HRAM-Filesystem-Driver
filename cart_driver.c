@@ -17,6 +17,7 @@
 #include <cart_driver.h>
 #include <cart_controller.h>
 #include <cart_cache.h>
+#include <cart_network.h>
 //#include <cart_network.h>
 //
 // Implementation
@@ -127,7 +128,7 @@ void runBusRequest(uint8_t kyOne, uint16_t ctOne, uint16_t fmOne, void *buf) {
 	regstate.fmOne = fmOne; // Assigns frame register one
 	regstate.rt = 0; 
 
-	readBusResponse(cart_io_bus(generateBusRequest(), buf)); // Call readBusResponse to read the returned 64-bit unsigned int.
+	readBusResponse(client_cart_bus_request(generateBusRequest(), buf)); // Call readBusResponse to read the returned 64-bit unsigned int.
 }
 
 ////////////////////////////////////////////////////////////////////////////////
