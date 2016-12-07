@@ -17,6 +17,7 @@
 #include <cart_driver.h>
 #include <cart_controller.h>
 #include <cart_cache.h>
+//#include <cart_network.h>
 //
 // Implementation
 
@@ -445,7 +446,12 @@ int32_t cart_write(int16_t fd, void *buf, int32_t count) {
 	char sizeOfFrameBuf[CART_FRAME_SIZE];
 	int *myRalloc; // used to see if a pointer initialized by a malloc is null
 	void* get_cart_cache_results; // pointer to determine if the frame exists in the cache.  If it does, it is used to memcpy the frame over to the localBuf
-	
+
+	struct newFrame {
+		int frame;
+		int cartridge;
+	} newFrame;
+
 	for(i=0; i <= fileSystemSize; i++) { // determines fileSystemIndex by looking for the fd in the filesystem array
 		if(filesystem[i].fileHandle == fd) { 
 			fileSystemIndex = i;
@@ -488,12 +494,13 @@ int32_t cart_write(int16_t fd, void *buf, int32_t count) {
 		}
 		// Place the frame into the cache
 		put_cart_cache(filesystem[fileSystemIndex].location.occupiedCartridges[0], filesystem[fileSystemIndex].location.occupiedFrames[0], sizeOfFrameBuf);
+		// printf("cart_write: Cart/Fram %d/%d placed in cache\n", filesystem[fileSystemIndex].location.occupiedCartridges[0], filesystem[fileSystemIndex].location.occupiedFrames[0]);
 		// Place the frame into the bus
 		runBusRequest(4, 0, filesystem[fileSystemIndex].location.occupiedFrames[0], sizeOfFrameBuf);
 		if(regstate.rt != 0) {
 			printf("cart_write: error writing to frame %d\n", filesystem[fileSystemIndex].location.occupiedFrames[0]);	
 			return -1;
-		}	
+		}
 	} 
 	// Code used for writing to the file's exists frames and additionally need frames
 	else {
@@ -507,6 +514,7 @@ int32_t cart_write(int16_t fd, void *buf, int32_t count) {
 			}
 			filesystem[fileSystemIndex].location.occupiedFrames = myRalloc;
 			filesystem[fileSystemIndex].location.occupiedFrames[filesystem[fileSystemIndex].location.frames] = nextFrame;
+			newFrame.frame = filesystem[fileSystemIndex].location.occupiedFrames[filesystem[fileSystemIndex].location.frames];
 			nextFrame++;
 
 			// filesystem[fileSystemIndex].location.cartridges++; // Increase the number of occupied cartridges for this file by one, and add the new cartridge to the array/
@@ -517,11 +525,19 @@ int32_t cart_write(int16_t fd, void *buf, int32_t count) {
 			}
 			filesystem[fileSystemIndex].location.occupiedCartridges = myRalloc;
 			filesystem[fileSystemIndex].location.occupiedCartridges[filesystem[fileSystemIndex].location.frames] = nextCartridge;
+			newFrame.cartridge = filesystem[fileSystemIndex].location.occupiedCartridges[filesystem[fileSystemIndex].location.frames];
 			// If the nextFrame is equal to CART_FRAME_SIZE (which does not exist), time to go to the next cartridge.
 			if(nextFrame == CART_FRAME_SIZE) {
 				nextFrame = 0;
 				nextCartridge++;
 			}
+
+			newFrame.cartridge = filesystem[fileSystemIndex].location.occupiedCartridges[filesystem[fileSystemIndex].location.frames];
+			newFrame.frame = filesystem[fileSystemIndex].location.occupiedFrames[filesystem[fileSystemIndex].location.frames];
+		}
+		else {
+			newFrame.frame = -1;
+			newFrame.cartridge = -1;
 		}
 		
 		// In assign2, I was reading each frame the file was occupying.  This was very inefficient and costly, especially since in assign3 the file size can be as large as desired.
@@ -540,7 +556,7 @@ int32_t cart_write(int16_t fd, void *buf, int32_t count) {
 		// Read each frame the file is occupying, and place it into the localBuf	
 		// We load the frame(s) within this for's scope.  To ensure we do not accidently step outside the filesystem.location.occupiedFrames array,
 		// I check the size of filesystem.location.frames (the int that keeps track of the size of filesystem.location.occupiedFrames) too.
-		for(i=0; i<=(endFrameIndex - startFrameIndex)/* && i<=filesystem[fileSystemIndex].location.frames*/; i++) {
+		for(i=0; i<=(endFrameIndex - startFrameIndex) && !((newFrame.cartridge == filesystem[fileSystemIndex].location.occupiedCartridges[i + startFrameIndex]) & (newFrame.frame == filesystem[fileSystemIndex].location.occupiedFrames[i + startFrameIndex])); i++) {
 			// Check if the frame is located in the cache.  If it is not, fetch the frame from the bus.
 			get_cart_cache_results = get_cart_cache(filesystem[fileSystemIndex].location.occupiedCartridges[i + startFrameIndex], filesystem[fileSystemIndex].location.occupiedFrames[i + startFrameIndex]);	
 			if(get_cart_cache_results == NULL) {	
@@ -564,6 +580,7 @@ int32_t cart_write(int16_t fd, void *buf, int32_t count) {
 				memcpy(&localBuf[CART_FRAME_SIZE * i], get_cart_cache_results, CART_FRAME_SIZE);
 			}
 		}
+		
 
 		// Updates the localBuf at offset filesystem[fileSystemIndex].filePointer with count characters from buf
 		strncpy(&localBuf[filesystem[fileSystemIndex].filePointer - (startFrameIndex * CART_FRAME_SIZE)], buf, count);
@@ -586,7 +603,7 @@ int32_t cart_write(int16_t fd, void *buf, int32_t count) {
 			
 			// Place the frame into the cache
 			put_cart_cache(filesystem[fileSystemIndex].location.occupiedCartridges[i + startFrameIndex], filesystem[fileSystemIndex].location.occupiedFrames[i + startFrameIndex], sizeOfFrameBuf);
-				// Place the frame into the bus
+			// Place the frame into the bus
 			runBusRequest(4, 0, filesystem[fileSystemIndex].location.occupiedFrames[i + startFrameIndex], sizeOfFrameBuf);
 			if(regstate.rt != 0) {
 				printf("cart_write: error writing to frame %d\n", i);	

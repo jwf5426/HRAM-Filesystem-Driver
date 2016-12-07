@@ -16,6 +16,7 @@
 #include <string.h>
 // Project Include Files
 #include <cart_network.h>
+#include <cmpsc311_log.h>
 //#include <cart_driver.h>
 //
 //  Global data
@@ -23,7 +24,7 @@ int 		   client_socket = -1;
 int                cart_network_shutdown = 0;   // Flag indicating shutdown
 unsigned char     *cart_network_address = NULL; // Address of CART server
 unsigned short     cart_network_port = 0;       // Port of CART serve
-unsigned long      CartControllerLLevel = 0; // Controller log level (global)
+unsigned long      CartControllerLLevel = LOG_INFO_LEVEL; // Controller log level (global)
 unsigned long      CartDriverLLevel = 0;     // Driver log level (global)
 unsigned long      CartSimulatorLLevel = 0;  // Driver log level (global)
 //
@@ -113,7 +114,7 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 			return -1;
 		}
 
-		// Host Format: Send the register reg to the network after converting the register to 'network format'
+		// Host Format: Receive the register reg from the network.  Need to convert the register to 'host format'
 		if(read(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error reading network data\n");
 			// printf("Error reading network data [%s]\n", strerror(errno));
@@ -148,7 +149,7 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 			return -1;
 		}
 
-		// Host Format: Send the register reg to the network after converting the register to 'network format'
+		// Host Format: Receive the register reg from the network.  Need to convert the register to 'host format'
 		if(read(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error reading network data\n");
 			// printf("Error reading network data [%s]\n", strerror(errno));
@@ -167,7 +168,7 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 			return -1;
 		}
 
-		// Host Format: Send the register reg to the network after converting the register to 'network format'
+		// Host Format: Receive the register reg from the network.  Need to convert the register to 'host format'
 		if(read(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error reading network data\n");
 			// printf("Error reading network data [%s]\n", strerror(errno));
@@ -189,7 +190,7 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 			return -1;
 		}
 
-		// Host Format: Send the register reg to the network after converting the register to 'network format'
+		// Host Format: Receive the register reg from the network.  Need to convert the register to 'host format'
 		if(read(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error reading network data\n");
 			// printf("Error reading network data [%s]\n", strerror(errno));

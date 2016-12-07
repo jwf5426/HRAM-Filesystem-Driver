@@ -21,8 +21,6 @@
 //
 // Interface functions
 
-void readBusResponse(uint64_t busResponse);
-
 int32_t cart_poweron(void);
 	// Startup up the CART interface, initialize filesystem
 
