@@ -17,6 +17,7 @@
 // Project Include Files
 #include <cart_network.h>
 #include <cmpsc311_log.h>
+#include <cmpsc311_util.h>
 //#include <cart_driver.h>
 //
 //  Global data
