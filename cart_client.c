@@ -31,6 +31,12 @@ unsigned long      CartSimulatorLLevel = 0;  // Driver log level (global)
 //
 // Functions
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Structure    : regstate
+// Description  : A structure for the packed registers. Variable "regstate" will be updated each time 
+//                a bus request is called.
+
 struct {
 	uint8_t kyOne;
 	uint16_t ctOne;
@@ -38,7 +44,15 @@ struct {
 	uint8_t rt;
 } regstate;
 
-void temp_readBusResponse(uint64_t busResponse) { 	
+////////////////////////////////////////////////////////////////////////////////
+//
+// Function     : readBusResponse
+// Description  : Reads the return 64-bit unsigned int from the bus request. Places results in regstate.
+//
+// Inputs       : busResponse - an uint64_t that is used to read each register
+// Outputs      : none
+
+void readBusResponseClient(uint64_t busResponse) { 	
 	uint64_t temp;
 	
 	temp = busResponse & 0xff00000000000000; // Reads key register one
@@ -98,16 +112,11 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 		}
 	}
 
-	// printf("reg = %lu\n", reg);
-	temp_readBusResponse(reg);
-	// printf("kyOne = %d ctOne = %d fmOne = %d rt = %d\n", regstate.kyOne, regstate.ctOne, regstate.fmOne, regstate.rt);
+	readBusResponseClient(reg);
 	registerValue = htonll64(reg);	
-	// bufValue = malloc(sizeof(char) * CART_FRAME_SIZE);
 
 	// RD Operation
 	if(regstate.kyOne == 3) {
-		// printf("RD Operation\n");
-
 		// Network Format: Send the register reg to the network after converting the register to 'network format'
 		if(write(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error writing network data\n");
@@ -134,8 +143,6 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 
 	// WR Operation
 	else if(regstate.kyOne == 4) {
-		// printf("WR Operation\n");
-
 		// Network Format: Send the register reg to the network after converting the register to 'network format'
 		if(write(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error writing network data\n");
@@ -143,8 +150,10 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 			return -1;
 		}
 
+		memcpy(bufValue, buf, CART_FRAME_SIZE);
+
 		// Data to write to that frame
-		if(write(client_socket, &buf, CART_FRAME_SIZE) != CART_FRAME_SIZE) {
+		if(write(client_socket, &bufValue, CART_FRAME_SIZE) != CART_FRAME_SIZE) {
 			printf("Error writing network data\n");
 			// printf("Error writing network data [%s]\n", strerror(errno));
 			return -1;
@@ -160,8 +169,6 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 
 	// SHUTDOWN Operation
 	else if(regstate.kyOne == 5) {
-		// printf("SHUTDOWN Operation\n");
-
 		// Network Format: Send the register reg to the network after converting the register to 'network format'
 		if(write(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error writing network data\n");
@@ -182,8 +189,6 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 
 	// Other
 	else {
-		// printf("Default Operation\n");
-
 		// Network Format: Send the register reg to the network after converting the register to 'network format'
 		if(write(client_socket, &registerValue, sizeof(registerValue)) != sizeof(registerValue)) {
 			printf("Error writing network data\n");
@@ -199,7 +204,5 @@ CartXferRegister client_cart_bus_request(CartXferRegister reg, void *buf) {
 		}
 	}
 	
-	// free(bufValue);
-
 	return ntohll64(registerValue);
 }

@@ -18,7 +18,6 @@
 #include <cart_controller.h>
 #include <cart_cache.h>
 #include <cart_network.h>
-//#include <cart_network.h>
 //
 // Implementation
 
